@@ -1,0 +1,56 @@
+on: # yamllint disable-line rule:truthy
+  workflow_call:
+    inputs:
+      image_name:
+        required: true
+        type: string
+      image_tag:
+        required: true
+        type: string
+        default: latest
+      image_containerfile:
+        required: true
+        type: string
+        default: Containerfile
+      image_test_command:
+        required: false
+        type: string
+    secrets:
+      QUAY_USER:
+        required: true
+      QUAY_TOKEN:
+        required: true
+
+name: Create container image and push to quay.io
+
+jobs:
+  build:
+    name: Build image and push to quay.io
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+    - name: Build image
+      id: build-image
+      uses: redhat-actions/buildah-build@v2
+      with:
+        image: ${{ inputs.image_name }}
+        tags: ${{ inputs.image_tag }}
+        containerfiles: ${{ inputs.image_containerfile }}
+    - name: Test image
+      uses: fmidev/podman-run-action@v1
+      if: "${{ inputs.image_test_command != '' }}"
+      with:
+        image: ${{ steps.build-image.outputs.image-with-tag }}
+        run: ${{ inputs.image_test_command != '' }}
+    - name: Push to quay.io
+      id: push-to-quay
+      uses: redhat-actions/push-to-registry@v2
+      with:
+        image: ${{ steps.build-image.outputs.image }}
+        tags: ${{ steps.build-image.outputs.tags }}
+        registry: quay.io/fmi
+        username: ${{ secrets.QUAY_USER }}
+        password: ${{ secrets.QUAY_TOKEN }}
+    - name: Print image url
+      run: echo "Image pushed to ${{ steps.push-to-quay.outputs.registry-paths }}"
