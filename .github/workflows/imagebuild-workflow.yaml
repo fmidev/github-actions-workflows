@@ -42,7 +42,7 @@ jobs:
       if: "${{ inputs.image_test_command != '' }}"
       with:
         image: ${{ steps.build-image.outputs.image-with-tag }}
-        run: ${{ inputs.image_test_command != '' }}
+        run: ${{ inputs.image_test_command }}
     - name: Push to quay.io
       id: push-to-quay
       uses: redhat-actions/push-to-registry@v2
