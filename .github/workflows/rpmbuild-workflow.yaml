@@ -110,7 +110,7 @@ jobs:
     name: Build container image
     needs: sync_repo
     runs-on: ubuntu-latest
-    uses: fmidev/github-actions-workflows/.github/workflows/imagebuild-workflow.yaml
+    uses: fmidev/github-actions-workflows/.github/workflows/imagebuild-workflow.yaml@main
     with:
       image_name: ${{ inputs.image_name }}
       image_tag: ${{ inputs.image_tag }}
