@@ -74,9 +74,9 @@ jobs:
         spec_file: "${{ inputs.rpm_spec_file }}"
         additional_repositories: "${{ inputs.rpm_additional_repositories }}"
         enable_repositories: "${{ inputs.rpm_enable_repositories }}"
-        enable_modules: "${{ inputs.enable_modules }}"
-        disable_modules: "${{ inputs.disable_modules }}"
-        dnf_commands: "${{ inputs.dnf_commands }}"
+        enable_modules: "${{ inputs.rpm_enable_modules }}"
+        disable_modules: "${{ inputs.rpm_disable_modules }}"
+        dnf_commands: "${{ inputs.rpm_dnf_commands }}"
     - name: Save RPM as an artifact
       uses: actions/upload-artifact@v2
       with:
