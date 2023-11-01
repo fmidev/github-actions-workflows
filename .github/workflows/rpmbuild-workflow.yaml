@@ -109,7 +109,6 @@ jobs:
     if: ${{ inputs.build_image }}
     name: Build container image
     needs: sync_repo
-    runs-on: ubuntu-latest
     uses: fmidev/github-actions-workflows/.github/workflows/imagebuild-workflow.yaml@main
     with:
       image_name: ${{ inputs.image_name }}
