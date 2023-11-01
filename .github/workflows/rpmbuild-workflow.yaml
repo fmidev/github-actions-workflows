@@ -1,0 +1,121 @@
+on: # yamllint disable-line rule:truthy
+  workflow_call:
+    inputs:
+      rpm_base_image:
+        type: string
+        default: rockylinux/rockylinux:8
+      rpm_spec_file:
+        required: true
+        type: string
+      rpm_additional_repositories:
+        required: false
+        type: string
+      rpm_enable_repositories:
+        required: false
+        type: string
+      rpm_enable_modules:
+        required: false
+        type: string
+      rpm_disable_modules:
+        required: false
+        type: string
+      rpm_dnf_commands:
+        required: false
+        type: string
+      build_image:
+        type: boolean
+        default: true
+      image_name:
+        required: true
+        type: string
+      image_tag:
+        required: false
+        type: string
+        default: latest
+      image_containerfile:
+        required: false
+        type: string
+        default: Containerfile
+      image_test_command:
+        required: false
+        type: string
+    secrets:
+      RPM_API_USER:
+        required: true
+      RPM_API_PASS:
+        required: true
+      RPM_API_HOST:
+        required: true
+      QUAY_USER:
+        required: true
+      QUAY_TOKEN:
+        required: true
+
+name: Create RPM, update yum repository and create image to quay.io
+
+jobs:
+  build_rpm:
+    name: Build RPM package
+    runs-on: ubuntu-latest
+    container:
+      image: ${{ inputs.rpm_base_image }}
+      volumes:
+      - ${{ github.workspace }}:/github/workspace
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@master
+    - name: List workspace
+      run: ls -lah
+      working-directory: ${{ github.workspace }}
+    - name: Build RPM package
+      id: build-rpm
+      uses: fmidev/rpmbuild-action@v1
+      with:
+        spec_file: "${{ inputs.rpm_spec_file }}"
+        additional_repositories: "${{ inputs.rpm_additional_repositories }}"
+        enable_repositories: "${{ inputs.rpm_enable_repositories }}"
+        enable_modules: "${{ inputs.enable_modules }}"
+        disable_modules: "${{ inputs.disable_modules }}"
+        dnf_commands: "${{ inputs.dnf_commands }}"
+    - name: Save RPM as an artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: rpm-files
+        path: ${{ steps.build-rpm.outputs.rpm_dir_path }}
+        retention-days: 1
+
+  sync_repo:
+    name: Update RPM repository
+    needs: build_rpm
+    runs-on: ubuntu-latest
+    steps:
+    - name: Retrieve saved rpms
+      uses: actions/download-artifact@v2
+      with:
+         name: rpm-files
+    - name: List rpms
+      run: find ${{ github.workspace }}
+      shell: bash
+    - name: Copy to repo
+      shell: bash
+      env:
+        USER: ${{ secrets.RPM_API_USER }}
+        PASS: ${{ secrets.RPM_API_PASS }}
+        HOST: ${{ secrets.RPM_API_HOST }}
+      run: |
+           find ${{ github.workspace }} -type f -name "*.rpm" -not -name "*debug*" -exec curl --show-error --fail -u $USER:$PASS -F file=@{} $HOST/api/upload \;
+
+  build_image:
+    if: ${{ inputs.build_image }}
+    name: Build container image
+    needs: sync_repo
+    runs-on: ubuntu-latest
+    uses: fmidev/github-actions-workflows/.github/workflows/imagebuild-workflow.yaml
+    with:
+      image_name: ${{ inputs.image_name }}
+      image_tag: ${{ inputs.image_tag }}
+      image_containerfile: ${{ inputs.image_containerfile }}
+      image_test_command: ${{ inputs.image_test_command }}
+    secrets:
+      QUAY_USER: ${{ secrets.QUAY_USER }}
+      QUAY_TOKEN: ${{ secrets.QUAY_TOKEN }}
