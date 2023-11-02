@@ -26,8 +26,9 @@ on: # yamllint disable-line rule:truthy
         type: boolean
         default: true
       image_name:
-        required: true
+        required: false
         type: string
+        default: ${{ github.event.repository.name }}
       image_tag:
         required: false
         type: string
@@ -92,7 +93,7 @@ jobs:
     - name: Retrieve saved rpms
       uses: actions/download-artifact@v2
       with:
-         name: rpm-files
+        name: rpm-files
     - name: List rpms
       run: find ${{ github.workspace }}
       shell: bash
