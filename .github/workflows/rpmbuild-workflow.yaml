@@ -48,9 +48,9 @@ on: # yamllint disable-line rule:truthy
       RPM_API_HOST:
         required: true
       QUAY_USER:
-        required: true
+        required: false
       QUAY_TOKEN:
-        required: true
+        required: false
 
 name: Create RPM, update yum repository and create image to quay.io
 
