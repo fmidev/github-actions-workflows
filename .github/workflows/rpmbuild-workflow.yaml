@@ -22,6 +22,9 @@ on: # yamllint disable-line rule:truthy
       rpm_dnf_commands:
         required: false
         type: string
+      update_rpm_repository:
+        type: boolean
+        default: true
       build_image:
         type: boolean
         default: true
@@ -86,6 +89,7 @@ jobs:
         retention-days: 1
 
   sync_repo:
+    if: ${{ inputs.update_rpm_repository }}
     name: Update RPM repository
     needs: build_rpm
     runs-on: ubuntu-latest
