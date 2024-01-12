@@ -94,12 +94,20 @@ jobs:
     needs: build_rpm
     runs-on: ubuntu-latest
     steps:
+    - name: Create unique temp directory for downloadable rpms
+      id: create-temp-directory
+      shell: bash
+      run: |
+        uuid=$(uuidgen)
+        mkdir -p $GITHUB_WORKSPACE/$uuid
+        echo "directory=$GITHUB_WORKSPACE/$uuid" >> "$GITHUB_OUTPUT"
     - name: Retrieve saved rpms
-      uses: actions/download-artifact@v2
+      uses: actions/download-artifact@v3
       with:
         name: rpm-files
+        path: ${{ steps.create-temp-directory.outputs.directory }}
     - name: List rpms
-      run: find ${{ github.workspace }}
+      run: find ${{ steps.create-temp-directory.outputs.directory }}
       shell: bash
     - name: Copy to repo
       shell: bash
@@ -108,7 +116,9 @@ jobs:
         PASS: ${{ secrets.RPM_API_PASS }}
         HOST: ${{ secrets.RPM_API_HOST }}
       run: |
-           find ${{ github.workspace }} -type f -name "*.rpm" -not -name "*debug*" -exec curl --show-error --fail -u $USER:$PASS -F file=@{} $HOST/api/upload \;
+           find ${{ steps.create-temp-directory.outputs.directory }} -type f -name "*.rpm" -not -name "*debug*" -exec curl --show-error --fail -u $USER:$PASS -F file=@{} $HOST/api/upload \;
+    - name: Cleanup
+      run: rm -rf ${{ steps.create-temp-directory.outputs.directory }}
 
   build_image:
     if: ${{ inputs.build_image }}
