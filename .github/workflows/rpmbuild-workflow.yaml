@@ -84,7 +84,7 @@ jobs:
     - name: Save RPM as an artifact
       uses: actions/upload-artifact@v2
       with:
-        name: rpm-files
+        name: rpm-files-${{ github.run_id }}-${{ github.run_number }}-${{ github.run_attempt }}
         path: ${{ steps.build-rpm.outputs.rpm_dir_path }}
         retention-days: 1
 
@@ -104,7 +104,7 @@ jobs:
     - name: Retrieve saved rpms
       uses: actions/download-artifact@v3
       with:
-        name: rpm-files
+        name: rpm-files-${{ github.run_id }}-${{ github.run_number }}-${{ github.run_attempt }}
         path: ${{ steps.create-temp-directory.outputs.directory }}
     - name: List rpms
       run: find ${{ steps.create-temp-directory.outputs.directory }}
