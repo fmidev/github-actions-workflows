@@ -58,9 +58,20 @@ on: # yamllint disable-line rule:truthy
 name: Create RPM, update yum repository and create image to quay.io
 
 jobs:
+  build_id:
+    runs-on: ubuntu-latest
+    outputs:
+      build_id: ${{ steps.build_id.outputs.build_id }}
+    steps:
+      - name: 'Set build id'
+        id: build_id
+        run: |
+          uuid=$(uuidgen)
+          echo "build_id=$uuid" >> "$GITHUB_OUTPUT"
   build_rpm:
     name: Build RPM package
     runs-on: ubuntu-latest
+    needs: build_id
     container:
       image: ${{ inputs.rpm_base_image }}
       volumes:
@@ -84,27 +95,28 @@ jobs:
     - name: Save RPM as an artifact
       uses: actions/upload-artifact@v2
       with:
-        name: rpm-files-${{ github.run_id }}-${{ github.run_number }}-${{ github.run_attempt }}
+        name: rpm-files-${{ needs.build_id.outputs.build_id }}
         path: ${{ steps.build-rpm.outputs.rpm_dir_path }}
         retention-days: 1
 
   sync_repo:
     if: ${{ inputs.update_rpm_repository }}
     name: Update RPM repository
-    needs: build_rpm
+    needs:
+      - build_id
+      - build_rpm
     runs-on: ubuntu-latest
     steps:
     - name: Create unique temp directory for downloadable rpms
       id: create-temp-directory
       shell: bash
       run: |
-        uuid=$(uuidgen)
-        mkdir -p $GITHUB_WORKSPACE/$uuid
-        echo "directory=$GITHUB_WORKSPACE/$uuid" >> "$GITHUB_OUTPUT"
+        mkdir -p $GITHUB_WORKSPACE/${{ needs.build_id.outputs.build_id }}
+        echo "directory=$GITHUB_WORKSPACE/${{ needs.build_id.outputs.build_id }}" >> "$GITHUB_OUTPUT"
     - name: Retrieve saved rpms
       uses: actions/download-artifact@v3
       with:
-        name: rpm-files-${{ github.run_id }}-${{ github.run_number }}-${{ github.run_attempt }}
+        name: rpm-files-${{ needs.build_id.outputs.build_id }}
         path: ${{ steps.create-temp-directory.outputs.directory }}
     - name: List rpms
       run: find ${{ steps.create-temp-directory.outputs.directory }}
