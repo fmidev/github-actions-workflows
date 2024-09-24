@@ -93,7 +93,7 @@ jobs:
         disable_modules: "${{ inputs.rpm_disable_modules }}"
         dnf_commands: "${{ inputs.rpm_dnf_commands }}"
     - name: Save RPM as an artifact
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       with:
         name: rpm-files-${{ needs.build_id.outputs.build_id }}
         path: ${{ steps.build-rpm.outputs.rpm_dir_path }}
@@ -114,7 +114,7 @@ jobs:
         mkdir -p $GITHUB_WORKSPACE/${{ needs.build_id.outputs.build_id }}
         echo "directory=$GITHUB_WORKSPACE/${{ needs.build_id.outputs.build_id }}" >> "$GITHUB_OUTPUT"
     - name: Retrieve saved rpms
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: rpm-files-${{ needs.build_id.outputs.build_id }}
         path: ${{ steps.create-temp-directory.outputs.directory }}
