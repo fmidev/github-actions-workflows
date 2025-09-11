@@ -84,7 +84,7 @@ jobs:
       working-directory: ${{ github.workspace }}
     - name: Build RPM package
       id: build-rpm
-      uses: fmidev/rpmbuild-action@v1
+      uses: fmidev/rpmbuild-action@v2
       with:
         spec_file: "${{ inputs.rpm_spec_file }}"
         additional_repositories: "${{ inputs.rpm_additional_repositories }}"
