@@ -15,6 +15,9 @@ on: # yamllint disable-line rule:truthy
       image_test_command:
         required: false
         type: string
+      build_args:
+        required: false
+        type: string
     secrets:
       QUAY_USER:
         required: true
@@ -37,6 +40,7 @@ jobs:
         image: ${{ inputs.image_name }}
         tags: ${{ inputs.image_tag }}
         containerfiles: ${{ inputs.image_containerfile }}
+        build-args: ${{ inputs.build_args }}
     - name: Test image
       uses: fmidev/podman-run-action@v1
       if: "${{ inputs.image_test_command != '' }}"
